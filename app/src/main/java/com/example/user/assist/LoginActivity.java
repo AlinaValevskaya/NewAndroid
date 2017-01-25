@@ -10,8 +10,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.user.assist.model.LoginReq;
+import com.example.user.assist.model.LoginResponse;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -27,6 +35,9 @@ public class LoginActivity extends AppCompatActivity {
     String loginStr;
     String passStr;
     SharedPreferences mSharedPreferences;
+
+    Retrofit retrofit;
+    AssistApi service;
 
 
    View.OnClickListener onClickListener = new View.OnClickListener() {
@@ -44,19 +55,42 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Текст должен быть не менее 5 символов", Toast.LENGTH_SHORT).show();
 
                 }else {
-                    mSharedPreferences.edit().putString(LOGIN_1,loginStr).apply();
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.putExtra(Constants.KEY_LOGIN,loginStr);
-                    intent.putExtra(Constants.KEY_PASS,passStr);
 
-                 //   Bundle bndl = new Bundle();
-                 //   bndl.putString("keyLogin",loginStr);
-                  //  bndl.putString("keyPass",passStr);
-                 //   intent.putExtras(bndl);
+                    service.auth(new LoginReq(loginStr, passStr)).enqueue(new Callback<LoginResponse>() {
+                        @Override
+                        public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                            LoginResponse loginResponse = new LoginResponse();
+                            loginResponse = response.body();
 
-                    startActivity(intent);
-                    finish();
-                    Toast.makeText(LoginActivity.this, "Авторизация пройдена", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, "Авторизация пройдена", Toast.LENGTH_SHORT).show();
+
+                            mSharedPreferences.edit().putString(LOGIN_1,loginStr).apply();
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            intent.putExtra(Constants.KEY_LOGIN,loginStr);
+                            intent.putExtra(Constants.KEY_PASS,passStr);
+
+                            Bundle bndl = new Bundle();
+                            bndl.putString("keyLogin",loginStr);
+                            bndl.putString("keyPass",passStr);
+                            bndl.putString("token",loginResponse.getLoginData().getToken());
+
+                            intent.putExtras(bndl);
+
+                            startActivity(intent);
+
+                            finish();
+                        }
+
+                        @Override
+                        public void onFailure(Call<LoginResponse> call, Throwable t) {
+
+                            Toast.makeText(LoginActivity.this, "Авторизация не пройдена", Toast.LENGTH_SHORT).show();
+
+                        }
+                    });
+
+
+
                 }
 
         }
@@ -78,6 +112,12 @@ public class LoginActivity extends AppCompatActivity {
             login1.setText(login);
 
         }
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl("http://private-32252-assist3.apiary-mock.com")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        service = retrofit.create(AssistApi.class);
 
 
 

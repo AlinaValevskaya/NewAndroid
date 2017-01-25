@@ -17,13 +17,17 @@ import android.widget.Toast;
 
 import com.example.user.assist.model.Auth;
 import com.example.user.assist.model.Theme;
+import com.example.user.assist.model.ThemeResponse;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.util.ArrayList;
 
 import butterknife.BindView;
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
@@ -35,14 +39,9 @@ public class MainActivity extends AppCompatActivity {
     MyAdapter adapter;
     Dialog dialog;
     Retrofit retrofit;
+    AssistApi service;
 
-    interface AssistApi{
-        @POST ("/auth")
-        Call<Object> auth (Auth auth);
-        @GET ("/themes")
-        Call<Object> themes (@Query("token") String token);
 
-    }
 
     MyAdapter.OnClickCallBack callBack = new MyAdapter.OnClickCallBack() {
         @Override
@@ -76,8 +75,31 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        retrofit = new Retrofit.Builder()
+                .baseUrl("http://private-32252-assist3.apiary-mock.com")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        service = retrofit.create(AssistApi.class);
+
+
+
         getIntent().getStringExtra(Constants.KEY_LOGIN);
         getIntent().getStringExtra(Constants.KEY_PASS);
+        String token = getIntent().getStringExtra("token");
+
+        service.themes(token).enqueue(new Callback<ThemeResponse>() {
+            @Override
+            public void onResponse(Call<ThemeResponse> call, Response<ThemeResponse> response) {
+                ArrayList<Theme>themes =(ArrayList<Theme>) response.body().getData().getThemes();
+
+                adapter.setArr(themes);
+            }
+
+            @Override
+            public void onFailure(Call<ThemeResponse> call, Throwable t) {
+
+            }
+        });
 
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.RV);

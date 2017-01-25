@@ -1,5 +1,7 @@
 package com.example.user.assist.model;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
@@ -13,14 +15,16 @@ import com.raizlabs.android.dbflow.structure.BaseModel;
 public class Theme extends BaseModel {
 
 
-    public int getId() {
-        return id;
-    }
+
 
     @Column
     @PrimaryKey(autoincrement = true)
+    @SerializedName("id")
+    @Expose
     int id;
     @Column
+    @SerializedName("name")
+    @Expose
     String name;
 
     public void setName(String name) {
@@ -32,6 +36,9 @@ public class Theme extends BaseModel {
     }
     public void setId(int id) {
         this.id = id;
+    }
+    public int getId() {
+        return id;
     }
 
 
